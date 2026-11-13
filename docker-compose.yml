@@ -10,4 +10,9 @@ services:
     volumes:
       - ./data:/app/data:ro
       - ./configs:/app/configs:ro
-      - ./artifacts:/app/artifacts
+      # Named volume, not a bind mount: it inherits the image's ownership, so the non-root user
+      # can write the index.
+      - artifacts:/app/artifacts
+
+volumes:
+  artifacts:
