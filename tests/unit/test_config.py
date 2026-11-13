@@ -1,6 +1,6 @@
 import pytest
 
-from ragkit.config import llm_settings, load_config, parse_overrides
+from ragkit.config import deep_merge, llm_settings, load_config, parse_overrides
 
 
 @pytest.fixture
@@ -63,3 +63,12 @@ def test_empty_env_values_mean_unset(monkeypatch):
     monkeypatch.setenv("JUDGE_BASE_URL", "")
     judge = llm_settings("judge")
     assert judge.provider == "openai_compatible" and judge.model == "m"
+
+
+def test_changing_impl_replaces_the_stage_instead_of_merging_params():
+    base = {"chunker": {"impl": "markdown_heading", "min_tokens": 80}, "x": {"a": 1}}
+    out = deep_merge(base, {"chunker": {"impl": "fixed", "max_tokens": 300}, "x": {"b": 2}})
+    assert out["chunker"] == {"impl": "fixed", "max_tokens": 300}
+    assert out["x"] == {"a": 1, "b": 2}
+    same = deep_merge(base, {"chunker": {"impl": "markdown_heading", "max_tokens": 300}})
+    assert same["chunker"] == {"impl": "markdown_heading", "min_tokens": 80, "max_tokens": 300}

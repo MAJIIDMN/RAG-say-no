@@ -105,10 +105,19 @@ def llm_settings(role: Literal["generator", "judge"] = "generator") -> LLMSettin
     return generator.model_copy(update=explicit)
 
 
+def _same_stage(a: dict[str, Any], b: dict[str, Any]) -> bool:
+    return "impl" not in b or a.get("impl") == b["impl"]
+
+
 def deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
+    """Child wins. A stage whose `impl` changes is replaced whole: its params belong to the old impl."""
     out = dict(base)
     for key, value in override.items():
-        if isinstance(value, dict) and isinstance(out.get(key), dict):
+        if (
+            isinstance(value, dict)
+            and isinstance(out.get(key), dict)
+            and _same_stage(out[key], value)
+        ):
             out[key] = deep_merge(out[key], value)
         else:
             out[key] = value
