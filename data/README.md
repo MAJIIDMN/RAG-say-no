@@ -1,11 +1,17 @@
 # Data
 
-| Folder | Isi | Di-commit |
+| Folder | Contents | Committed |
 |---|---|---|
-| `data/toy/` | Dokumentasi rekaan pustaka "Quokka" (3 halaman) untuk test dan CI | ya |
-| `data/raw/fastapi/` | Salinan `docs/en/docs` dan `docs_src` dari repo FastAPI pada commit yang di-pin | tidak |
-| `data/processed/fastapi/` | Markdown hasil pra-proses yang dibaca `ragkit ingest` | tidak |
+| `data/toy/` | Fictional docs for a library called "Quokka" (3 pages) for tests and CI | yes |
+| `data/raw/fastapi/` | Sparse clone of the FastAPI repo at the pinned commit | no |
+| `data/processed/fastapi/` | Preprocessed Markdown read by `ragkit ingest` | no |
 
-`make data` mengunduh dokumentasi FastAPI berbahasa Inggris pada commit `315f093f` (sparse clone, hanya `docs/en/docs`, `docs_src`, dan `fastapi/openapi`), lalu menulis Markdown bersih ke `data/processed/fastapi/`. Skrip `scripts/prepare_fastapi_docs.py` menyisipkan contoh kode `{* ... *}`, menghapus anchor, HTML, dan pagar admonition, serta menulis front matter `title` dan `url`. Changelog, halaman `reference/`, dan halaman komunitas dilewati.
+`make data` fetches the English FastAPI documentation at commit `315f093f` (sparse, blobless clone of
+`docs/en/docs`, `docs_src` and `fastapi/openapi`) and writes clean Markdown to
+`data/processed/fastapi/`. `scripts/prepare_fastapi_docs.py` inlines the `{* ... *}` code samples,
+removes heading anchors, HTML, Jinja and admonition fences, and writes `title` and `url` front
+matter. It skips the changelog, `reference/`, community pages and include-only fragments: 124 pages
+kept, 34 skipped.
 
-Quokka tidak ada. Isinya ditulis untuk proyek ini supaya test tidak bergantung pada data berlisensi.
+The FastAPI documentation is MIT licensed. Quokka does not exist; its pages were written for this
+project so the tests do not depend on licensed data.
