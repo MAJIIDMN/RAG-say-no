@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from ragkit.core.registry import JUDGES
 from ragkit.core.schemas import Judgement
@@ -63,6 +63,7 @@ def _content(text: str) -> set[str]:
 
 
 class LexicalParams(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     min_recall: float = Field(0.6, description="Share of reference content words the answer needs.")
 
 
@@ -87,7 +88,7 @@ class Correctness(BaseModel):
 
 
 class LLMJudgeParams(BaseModel):
-    pass
+    model_config = ConfigDict(extra="forbid")
 
 
 class LLMJudge:

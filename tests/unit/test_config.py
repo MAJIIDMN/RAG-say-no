@@ -98,3 +98,26 @@ def test_unknown_plugin_is_a_config_error():
 
     with pytest.raises(pydantic.ValidationError, match="no_such_module"):
         RAGConfig.model_validate({"plugins": ["no_such_module"]})
+
+
+def test_a_typo_in_a_config_key_is_an_error():
+    import pydantic
+    import pytest
+
+    from ragkit.config import RAGConfig
+
+    with pytest.raises(pydantic.ValidationError, match="min_scor"):
+        RAGConfig.model_validate({"abstention": {"min_scor": 0.5}})
+    with pytest.raises(pydantic.ValidationError, match="retriver"):
+        RAGConfig.model_validate({"retriver": {"impl": "bm25"}})
+
+
+def test_judge_can_set_a_zero_price_explicitly(monkeypatch):
+    monkeypatch.setenv("LLM_INPUT_PRICE_PER_MTOK", "3")
+    monkeypatch.setenv("JUDGE_INPUT_PRICE_PER_MTOK", "0")
+    assert llm_settings("judge").input_price_per_mtok == 0.0
+
+
+def test_provider_can_name_a_plugin_client(monkeypatch):
+    monkeypatch.setenv("LLM_PROVIDER", "my_provider")
+    assert llm_settings().provider == "my_provider"

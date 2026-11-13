@@ -13,25 +13,31 @@ from pathlib import Path
 from typing import Annotated, Any, Literal
 
 import yaml
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 from ragkit.core.registry import StageSpec
 
 
 class CorpusConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     path: str = "data/toy"
     glob: str = "**/*"
     extensions: list[str] = [".md", ".txt", ".html", ".pdf"]
 
 
 class RetrievalConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     candidates: int = Field(50, description="Top-k from each retriever and after fusion.")
     rerank_candidates: int = Field(30, description="How many fused candidates the reranker scores.")
     context_size: int = Field(5, description="Chunks passed to the generator.")
 
 
 class AbstentionConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     enabled: bool = True
     min_score: float = Field(0.0, description="Gate 1 threshold on the top rerank score.")
     sufficiency_check: bool = Field(False, description="Gate 2: separate LLM sufficiency call.")
@@ -40,6 +46,8 @@ class AbstentionConfig(BaseModel):
 
 
 class RAGConfig(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     name: str = "default"
     description: str = ""
     plugins: list[str] = Field(
@@ -87,7 +95,9 @@ class LLMSettings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    provider: Literal["openai_compatible", "anthropic", "fake"] = "openai_compatible"
+    provider: str = Field(
+        "openai_compatible", description="Name in the LLM_CLIENTS registry: built-in or plugin."
+    )
     model: str = ""
     base_url: str | None = None
     api_key: str | None = None
@@ -116,7 +126,7 @@ def llm_settings(role: Literal["generator", "judge"] = "generator") -> LLMSettin
         return generator
     judge = LLMSettings(_env_prefix="JUDGE_")
     # Unset JUDGE_* values inherit from LLM_*.
-    explicit = {k: v for k, v in judge.model_dump().items() if k in judge.model_fields_set and v}
+    explicit = {k: v for k, v in judge.model_dump().items() if k in judge.model_fields_set}
     return generator.model_copy(update=explicit)
 
 
