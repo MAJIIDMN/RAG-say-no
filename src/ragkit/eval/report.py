@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 COLUMNS: list[tuple[str, str | None]] = [
-    ("Varian", None),
+    ("Variant", None),
     ("Recall@20", "recall@20"),
     ("Context recall", "context_recall"),
     ("MRR", "mrr"),
@@ -63,7 +63,7 @@ def ablation_table(run_dirs: list[Path]) -> str:
         ev = meta["eval_set"]
         lines.append("")
         lines.append(
-            f"Eval set: {ev['n']} pertanyaan, {ev['unanswerable']} tak terjawab "
+            f"Eval set: {ev['n']} questions, {ev['unanswerable']} unanswerable "
             f"(split: {meta['split']})."
         )
     return "\n".join(lines) + "\n"
@@ -91,8 +91,8 @@ def plot_curve(curve_path: Path, out_png: Path, chosen: float | None = None) -> 
             xytext=(8, -14),
             fontsize=9,
         )
-    ax.set_xlabel("Coverage (fraksi pertanyaan yang dijawab)")
-    ax.set_ylabel("Akurasi pada yang dijawab")
+    ax.set_xlabel("Coverage (share of questions answered)")
+    ax.set_ylabel("Accuracy on answered questions")
     ax.set_xlim(0, 1.02)
     ax.set_ylim(0, 1.02)
     ax.grid(alpha=0.3)

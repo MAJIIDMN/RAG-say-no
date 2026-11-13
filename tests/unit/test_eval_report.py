@@ -36,7 +36,7 @@ def test_ablation_table_formats_metrics_and_marks_missing_ones(tmp_path):
     row = table.splitlines()[2]
     assert row.startswith("| E001 |") and "0.500" in row and "1.5s" in row
     assert "–" in row
-    assert "10 pertanyaan, 3 tak terjawab" in table
+    assert "10 questions, 3 unanswerable" in table
 
 
 def test_plot_curve_writes_png(tmp_path):
