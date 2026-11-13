@@ -160,6 +160,21 @@ def plot(
     typer.echo(plot_curve(run_dir / "curve.json", out, threshold))
 
 
+@app.command()
+def serve(
+    config: ConfigOpt,
+    override: OverrideOpt = None,
+    host: str = "127.0.0.1",
+    port: int = 8000,
+) -> None:
+    """Serve POST /ask and GET /health (needs the `api` extra)."""
+    import uvicorn
+
+    from ragkit.api import create_app
+
+    uvicorn.run(create_app(_pipeline(_cfg(config, override))), host=host, port=port)
+
+
 @evalset_app.command("check")
 def evalset_check(eval_set: EvalSetOpt, config: ConfigOpt, override: OverrideOpt = None) -> None:
     """Schema, duplicate ids, group leakage across splits, evidence present in the corpus."""

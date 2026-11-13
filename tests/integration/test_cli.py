@@ -36,7 +36,8 @@ def test_ingest_then_ask_returns_a_cited_answer(cli):
     )
     assert out.exit_code == 0, out.output
     resp = json.loads(out.output)
-    assert resp["answered"] and resp["citations"][0]["doc_id"] == "background-jobs"
+    assert resp["answered"] and "3 times" in resp["answer"]
+    assert resp["citations"][0]["doc_id"] == "background-jobs"
 
 
 def test_ask_without_an_index_explains_how_to_build_it(cli):

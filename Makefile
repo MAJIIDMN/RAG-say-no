@@ -9,12 +9,12 @@ ABLATION_SET ?= evals/datasets/fastapi.jsonl
 
 .PHONY: setup setup-ml hooks test test-slow lint format data ingest eval tune ablation report
 
-setup:            ## core + LLM SDKs + plotting + dev tools; enough for tests and the offline baseline
-	uv sync --extra llm --extra evals
+setup:            ## core + LLM SDKs + plotting + API + dev tools; enough for tests and the offline baseline
+	uv sync --extra llm --extra evals --extra api
 	@test -f .env || cp .env.example .env
 
 setup-ml:         ## + sentence-transformers and CPU torch for real embedders/rerankers
-	uv sync --extra llm --extra ml --extra evals
+	uv sync --extra llm --extra ml --extra evals --extra api
 	@test -f .env || cp .env.example .env
 
 hooks:

@@ -22,6 +22,7 @@ llm = [
     "openai>=3.50.0",
 ]
 evals = ["matplotlib>=3.9"]
+api = ["fastapi>=0.115", "uvicorn>=0.30"]
 
 [project.scripts]
 ragkit = "ragkit.cli:app"

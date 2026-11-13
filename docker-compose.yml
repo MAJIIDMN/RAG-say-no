@@ -1,0 +1,13 @@
+services:
+  api:
+    build: .
+    ports: ["8000:8000"]
+    environment:
+      CONFIG: ${CONFIG:-configs/toy.yaml}
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - ./data:/app/data:ro
+      - ./configs:/app/configs:ro
+      - ./artifacts:/app/artifacts
