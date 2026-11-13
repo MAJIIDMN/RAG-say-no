@@ -149,7 +149,9 @@ def report(
 @app.command()
 def plot(
     run_dir: Path,
-    out: Annotated[Path, typer.Option(help="PNG path.")] = Path("docs/img/coverage_accuracy.png"),
+    out: Annotated[Path, typer.Option(help="PNG path.")] = Path(
+        "docs/images/coverage_accuracy.png"
+    ),
     threshold: Annotated[float | None, typer.Option(help="Mark this threshold.")] = None,
 ) -> None:
     """Coverage vs accuracy from a run's curve.json (needs the `evals` extra)."""

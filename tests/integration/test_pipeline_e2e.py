@@ -1,5 +1,6 @@
 """Offline end to end: ingest the toy corpus, run the toy eval set, read the run directory."""
 
+import itertools
 import json
 from pathlib import Path
 
@@ -75,3 +76,18 @@ def test_runner_survives_a_failing_item(cfg, tmp_path):
     out = run_eval(cfg, items, runs_dir=tmp_path / "runs", pipeline=pipe, workers=1)
     m = json.loads((out / "metrics.json").read_text())
     assert m["n_errors"] == 2
+
+
+def test_faithfulness_is_reported_when_a_claim_checker_is_given(cfg, tmp_path):
+    from ragkit.core.registry import VERIFIERS
+    from ragkit.llm.fake import FakeLLMClient
+    from ragkit.verification.verifiers import Entailment
+
+    build_index(cfg)
+    verdicts = itertools.cycle([True, False])
+    llm = FakeLLMClient(lambda s, u, schema: Entailment(supported=next(verdicts), reason=""))
+    checker = VERIFIERS.create({"impl": "llm"}, llm=llm)
+    items = [i for i in load_eval_set(ROOT / "evals/datasets/toy.jsonl") if i.id in {"d01", "d02"}]
+    out = run_eval(cfg, items, runs_dir=tmp_path / "runs", faithfulness=checker, workers=1)
+    m = json.loads((out / "metrics.json").read_text())
+    assert m["faithfulness"] == 0.5

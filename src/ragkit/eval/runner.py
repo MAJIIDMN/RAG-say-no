@@ -20,8 +20,8 @@ from typing import Any
 import yaml
 
 from ragkit.config import LLMSettings, RAGConfig, llm_settings
-from ragkit.core.registry import JUDGES
-from ragkit.core.stages import Judge
+from ragkit.core.registry import JUDGES, VERIFIERS
+from ragkit.core.stages import Judge, Verifier
 from ragkit.eval import metrics as M
 from ragkit.eval.dataset import EvalItem, describe
 from ragkit.generation.prompts import PROMPT_VERSION
@@ -35,7 +35,9 @@ def cost_usd(usage: dict[str, int], settings: LLMSettings) -> float:
     ) / 1e6
 
 
-def evaluate_item(item: EvalItem, pipe: RAGPipeline, judge: Judge) -> dict[str, Any]:
+def evaluate_item(
+    item: EvalItem, pipe: RAGPipeline, judge: Judge, faithfulness: Verifier | None = None
+) -> dict[str, Any]:
     rec: dict[str, Any] = {
         "id": item.id,
         "split": item.split,
@@ -78,10 +80,17 @@ def evaluate_item(item: EvalItem, pipe: RAGPipeline, judge: Judge) -> dict[str, 
         )
         rec["context_recall"] = ctx[f"recall@{max(len(context), 1)}"]
 
-    rec["correct"] = False
+    rec["correct"], judge_usage = False, {}
     if resp.answered and item.answerable:
         verdict = judge.judge(item.question, item.reference_answer, resp.answer)
-        rec.update(correct=verdict.correct, judge_reason=verdict.reason, judge_usage=verdict.usage)
+        rec.update(correct=verdict.correct, judge_reason=verdict.reason)
+        judge_usage = dict(verdict.usage)
+    if resp.answered and faithfulness is not None:
+        check = faithfulness.verify(resp.claims, resp.retrieved)
+        rec["faithful"] = check.verdicts
+        for k, v in check.usage.items():
+            judge_usage[k] = judge_usage.get(k, 0) + v
+    rec["judge_usage"] = judge_usage
     return rec
 
 
@@ -102,6 +111,9 @@ def aggregate(records: list[dict[str, Any]]) -> dict[str, Any]:
     judged = [r for r in answerable if r["answered"]]
     out["accuracy_when_answered"] = M.mean([float(r["correct"]) for r in judged])
 
+    faithful = [v for r in ok for v in r.get("faithful", [])]
+    if faithful:
+        out["faithfulness"] = M.mean([float(v) for v in faithful])
     cites = [c["verified"] for r in ok if r["answered"] for c in r["citations"]]
     out["citation_precision"] = M.mean([float(v) for v in cites])
     reasons: dict[str, int] = {}
@@ -138,9 +150,15 @@ def run_eval(
     judge: Judge | None = None,
     workers: int = 4,
     tag: str = "",
+    faithfulness: Verifier | None = None,
 ) -> Path:
+    """`faithfulness` checks each answered claim against its cited passages. By default it is the
+    judge LLM when the judge is `llm`, and skipped otherwise."""
     pipe = pipeline or RAGPipeline(cfg)
-    judge = judge or JUDGES.create(cfg.judge, llm=LazyLLM(role="judge"))
+    judge_llm = LazyLLM(role="judge")
+    judge = judge or JUDGES.create(cfg.judge, llm=judge_llm)
+    if faithfulness is None and cfg.judge.impl == "llm":
+        faithfulness = VERIFIERS.create({"impl": "llm"}, llm=judge_llm)
     gen_prices, judge_prices = llm_settings("generator"), llm_settings("judge")
 
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -150,11 +168,11 @@ def run_eval(
 
     t0 = time.perf_counter()
     with ThreadPoolExecutor(max_workers=max(1, workers)) as pool:
-        records = list(pool.map(lambda it: evaluate_item(it, pipe, judge), items))
+        records = list(pool.map(lambda it: evaluate_item(it, pipe, judge, faithfulness), items))
     for r in records:
         if "error" not in r:
             r["cost_usd"] = cost_usd(r["usage"], gen_prices)
-            r["judge_cost_usd"] = cost_usd(r.get("judge_usage", {}), judge_prices)
+            r["judge_cost_usd"] = cost_usd(r["judge_usage"], judge_prices)
     with (out / "predictions.jsonl").open("w") as f:
         f.writelines(json.dumps(r, ensure_ascii=False) + "\n" for r in records)
 

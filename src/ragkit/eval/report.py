@@ -12,6 +12,7 @@ COLUMNS: list[tuple[str, str | None]] = [
     ("Recall@20", "recall@20"),
     ("Context recall", "context_recall"),
     ("MRR", "mrr"),
+    ("Faithfulness", "faithfulness"),
     ("Citation precision", "citation_precision"),
     ("Accuracy (answered)", "accuracy_when_answered"),
     ("CRAG score", "crag_score"),
