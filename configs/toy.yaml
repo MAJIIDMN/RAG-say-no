@@ -1,0 +1,7 @@
+# Offline smoke config on the fictional Quokka docs: no downloads, no API key. Used by CI.
+extends: base.yaml
+name: toy
+corpus: {path: data/toy}
+retriever: {impl: hybrid}
+reranker: {impl: lexical}
+verifier: {impl: quote}

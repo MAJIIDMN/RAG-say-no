@@ -1816,6 +1816,7 @@ dependencies = [
     { name = "pydantic-settings" },
     { name = "python-dotenv" },
     { name = "pyyaml" },
+    { name = "typer" },
 ]
 
 [package.optional-dependencies]
@@ -1853,6 +1854,7 @@ requires-dist = [
     { name = "pyyaml", specifier = ">=6.0.3" },
     { name = "sentence-transformers", marker = "extra == 'ml'", specifier = ">=3.0" },
     { name = "torch", marker = "extra == 'ml'", specifier = ">=2.3", index = "https://download.pytorch.org/whl/cpu" },
+    { name = "typer", specifier = ">=0.15" },
 ]
 provides-extras = ["ml", "llm", "evals"]
 

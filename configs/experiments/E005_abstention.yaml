@@ -1,0 +1,6 @@
+# Grounded prompt + gates. min_score stays 0 here; `make tune` picks it on calib and writes
+# configs/tuned/E005_abstention.yaml.
+extends: E004_rerank.yaml
+name: E005_abstention
+generator: {impl: llm, allow_abstain: true}
+abstention: {enabled: true, min_score: 0.0, respect_status: true}

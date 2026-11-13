@@ -1,0 +1,13 @@
+# Shared defaults for every FastAPI experiment. Variants list only what they change (`extends`).
+corpus:
+  path: data/processed/fastapi
+  extensions: [".md"]
+chunker: {impl: markdown_heading, max_tokens: 400, min_tokens: 80}
+embedder: {impl: hashing}
+retriever: {impl: bm25}
+retrieval: {candidates: 50, rerank_candidates: 30, context_size: 5}
+reranker: {impl: none}
+generator: {impl: extractive}
+abstention: {enabled: false}
+verifier: {impl: none}
+judge: {impl: lexical}

@@ -1,0 +1,4 @@
+# Same pipeline as E006 with fixed token windows instead of heading-aware chunks.
+extends: E006_verify.yaml
+name: E007_fixed_chunks
+chunker: {impl: fixed, max_tokens: 400, overlap_tokens: 50}

@@ -1,0 +1,3 @@
+extends: E002_dense_llm.yaml
+name: E003_hybrid
+retriever: {impl: hybrid, retrievers: [{impl: bm25}, {impl: dense}], rrf_k: 60}

@@ -2,8 +2,12 @@
 unexport PYTHONPATH
 # --no-sync: keep whichever extras `make setup` / `make setup-ml` installed.
 RUN := uv run --no-sync
+CONFIG ?= configs/toy.yaml
+EVALSET ?= evals/datasets/toy.jsonl
+SPLIT ?= test
+ABLATION_SET ?= evals/datasets/fastapi.jsonl
 
-.PHONY: setup setup-ml hooks test test-slow lint format data
+.PHONY: setup setup-ml hooks test test-slow lint format data ingest eval tune ablation report
 
 setup:            ## core + LLM SDKs + plotting + dev tools; enough for tests and the offline baseline
 	uv sync --extra llm --extra evals
@@ -32,3 +36,20 @@ format:
 
 data:             ## clone FastAPI docs at the pinned commit into data/raw and preprocess to data/processed
 	$(RUN) python scripts/prepare_fastapi_docs.py
+
+ingest:           ## build the index for CONFIG (default: offline toy)
+	$(RUN) ragkit ingest -c $(CONFIG)
+
+eval: ingest      ## run EVALSET/SPLIT through CONFIG and write runs/<stamp>_<name>_<split>/
+	$(RUN) ragkit eval -c $(CONFIG) -e $(EVALSET) --split $(SPLIT)
+
+tune: ingest      ## pick the score threshold on the calib split, write configs/tuned/
+	$(RUN) ragkit tune -c $(CONFIG) -e $(EVALSET)
+
+ablation:         ## E001-E007 on ABLATION_SET/SPLIT (needs make data, setup-ml and LLM_* in .env)
+	@for c in configs/experiments/E*.yaml; do \
+		$(RUN) ragkit ingest -c $$c && $(RUN) ragkit eval -c $$c -e $(ABLATION_SET) --split $(SPLIT) || exit 1; \
+	done
+
+report:           ## ablation table from the newest run per config
+	$(RUN) ragkit report --split $(SPLIT) --prefix E --out docs/ablation_$(SPLIT).md

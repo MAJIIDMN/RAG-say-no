@@ -1,0 +1,3 @@
+extends: E005_abstention.yaml
+name: E006_verify
+verifier: {impl: quote}

@@ -1,0 +1,3 @@
+extends: E003_hybrid.yaml
+name: E004_rerank
+reranker: {impl: cross_encoder}

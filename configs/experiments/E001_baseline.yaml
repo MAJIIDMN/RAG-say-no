@@ -1,0 +1,3 @@
+# BM25 + extractive answer. Lower bound with no model downloads and no API key.
+extends: ../base.yaml
+name: E001_baseline
