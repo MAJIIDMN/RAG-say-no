@@ -1,0 +1,32 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.13.5"
+          enable-cache: true
+      - name: Install
+        run: uv sync --frozen --extra llm --extra evals --extra api
+      - name: Lint
+        run: |
+          uv run --no-sync ruff check src tests scripts
+          uv run --no-sync ruff format --check src tests scripts
+      - name: Test
+        run: uv run --no-sync pytest
+      - name: Offline eval smoke run (toy corpus, no API key)
+        run: |
+          uv run --no-sync ragkit evalset check -c configs/toy.yaml -e evals/datasets/toy.jsonl
+          uv run --no-sync ragkit ingest -c configs/toy.yaml
+          uv run --no-sync ragkit eval -c configs/toy.yaml -e evals/datasets/toy.jsonl --split test
