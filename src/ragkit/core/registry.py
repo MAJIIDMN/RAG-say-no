@@ -58,3 +58,13 @@ class Registry(Generic[T]):
         if name not in self._entries:
             raise KeyError(f"Unknown {self.kind} '{name}'. Available: {', '.join(self.names())}")
         return self._entries[name]
+
+
+CHUNKERS: Registry = Registry("chunker")
+EMBEDDERS: Registry = Registry("embedder")
+RETRIEVERS: Registry = Registry("retriever")
+RERANKERS: Registry = Registry("reranker")
+LLM_CLIENTS: Registry = Registry("llm client")
+GENERATORS: Registry = Registry("generator")
+VERIFIERS: Registry = Registry("verifier")
+JUDGES: Registry = Registry("judge")
