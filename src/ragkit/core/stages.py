@@ -7,7 +7,7 @@ from typing import Protocol, TypeVar
 import numpy as np
 from pydantic import BaseModel
 
-from ragkit.core.schemas import Chunk, Claim, Document, Generation, ScoredChunk
+from ragkit.core.schemas import Chunk, Claim, Document, Generation, ScoredChunk, Verification
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -52,7 +52,7 @@ class Generator(Protocol):
 class Verifier(Protocol):
     """One verdict per claim: is it supported by the passages it cites?"""
 
-    def verify(self, claims: list[Claim], context: list[ScoredChunk]) -> list[bool]: ...
+    def verify(self, claims: list[Claim], context: list[ScoredChunk]) -> Verification: ...
 
 
 class Judge(Protocol):

@@ -68,6 +68,11 @@ class Generation(BaseModel):
     error: str | None = None
 
 
+class Verification(BaseModel):
+    verdicts: list[bool] = Field(description="One per claim: supported by the passages it cites.")
+    usage: dict[str, int] = Field(default_factory=dict)
+
+
 # Public response.
 
 

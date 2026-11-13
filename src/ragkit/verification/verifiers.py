@@ -7,7 +7,7 @@ import re
 from pydantic import BaseModel, ConfigDict, Field
 
 from ragkit.core.registry import VERIFIERS
-from ragkit.core.schemas import Chunk, Citation, Claim, ScoredChunk
+from ragkit.core.schemas import Chunk, Citation, Claim, ScoredChunk, Verification
 from ragkit.core.stages import LLMClient
 from ragkit.generation import prompts
 
@@ -62,16 +62,16 @@ class Entailment(BaseModel):
 
 
 class NoVerifier:
-    def verify(self, claims: list[Claim], context: list[ScoredChunk]) -> list[bool]:
-        return [True] * len(claims)
+    def verify(self, claims: list[Claim], context: list[ScoredChunk]) -> Verification:
+        return Verification(verdicts=[True] * len(claims))
 
 
 class QuoteVerifier:
     """Supported if at least one citation's quote appears verbatim in the passage it names."""
 
-    def verify(self, claims: list[Claim], context: list[ScoredChunk]) -> list[bool]:
+    def verify(self, claims: list[Claim], context: list[ScoredChunk]) -> Verification:
         by_label = _labels(context)
-        return [
+        verdicts = [
             any(
                 (chunk := _resolve(c.source_id, by_label)) is not None
                 and quote_in(c.quote, chunk.text)
@@ -79,6 +79,7 @@ class QuoteVerifier:
             )
             for cl in claims
         ]
+        return Verification(verdicts=verdicts)
 
 
 class LLMVerifier:
@@ -86,10 +87,9 @@ class LLMVerifier:
 
     def __init__(self, llm: LLMClient):
         self.llm = llm
-        self.usage: dict[str, int] = {}
 
-    def verify(self, claims: list[Claim], context: list[ScoredChunk]) -> list[bool]:
-        by_label, out = _labels(context), []
+    def verify(self, claims: list[Claim], context: list[ScoredChunk]) -> Verification:
+        by_label, out, total = _labels(context), [], {}
         for cl in claims:
             evidence = [ch.text for c in cl.citations if (ch := _resolve(c.source_id, by_label))]
             if not evidence:
@@ -99,9 +99,9 @@ class LLMVerifier:
                 prompts.VERIFY_CLAIM, prompts.verify_user(cl.text, evidence), Entailment
             )
             for k, v in usage.items():
-                self.usage[k] = self.usage.get(k, 0) + v
+                total[k] = total.get(k, 0) + v
             out.append(verdict.supported)
-        return out
+        return Verification(verdicts=out, usage=total)
 
 
 @VERIFIERS.register("none", _NoParams)

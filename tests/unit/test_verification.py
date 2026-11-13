@@ -31,16 +31,13 @@ def test_quote_in_normalises_whitespace_case_and_edge_punctuation():
 
 def test_quote_verifier_accepts_verbatim_and_rejects_invented_quotes():
     v = VERIFIERS.create({"impl": "quote"})
-    assert v.verify([claim("after the response is sent"), claim("before the request")], CTX) == [
-        True,
-        False,
-    ]
+    out = v.verify([claim("after the response is sent"), claim("before the request")], CTX)
+    assert out.verdicts == [True, False]
 
 
 def test_unknown_source_label_is_unsupported():
-    assert VERIFIERS.create({"impl": "quote"}).verify(
-        [claim("Tasks run after", source="S9")], CTX
-    ) == [False]
+    out = VERIFIERS.create({"impl": "quote"}).verify([claim("Tasks run after", source="S9")], CTX)
+    assert out.verdicts == [False]
 
 
 def test_llm_verifier_asks_once_per_claim_with_cited_text():
@@ -48,7 +45,7 @@ def test_llm_verifier_asks_once_per_claim_with_cited_text():
     out = VERIFIERS.create({"impl": "llm"}, llm=llm).verify(
         [claim("x"), claim("y", source="S2")], CTX
     )
-    assert out == [True, False] and len(llm.calls) == 1
+    assert out.verdicts == [True, False] and len(llm.calls) == 1
 
 
 def test_resolve_citations_maps_labels_to_chunks_and_flags_quotes():
