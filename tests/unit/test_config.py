@@ -72,3 +72,29 @@ def test_changing_impl_replaces_the_stage_instead_of_merging_params():
     assert out["x"] == {"a": 1, "b": 2}
     same = deep_merge(base, {"chunker": {"impl": "markdown_heading", "max_tokens": 300}})
     assert same["chunker"] == {"impl": "markdown_heading", "min_tokens": 80, "max_tokens": 300}
+
+
+def test_plugins_are_imported_so_project_stages_register(tmp_path, monkeypatch):
+    (tmp_path / "my_stages.py").write_text(
+        "from pydantic import BaseModel\n"
+        "from ragkit.core.registry import RERANKERS\n\n"
+        "class P(BaseModel):\n    pass\n\n"
+        "@RERANKERS.register('reverse', P)\n"
+        "def _reverse(params, **_):\n    return 'reverse-reranker'\n"
+    )
+    monkeypatch.syspath_prepend(str(tmp_path))
+    from ragkit.config import RAGConfig
+    from ragkit.core.registry import RERANKERS
+
+    cfg = RAGConfig.model_validate({"plugins": ["my_stages"], "reranker": {"impl": "reverse"}})
+    assert RERANKERS.create(cfg.reranker) == "reverse-reranker"
+
+
+def test_unknown_plugin_is_a_config_error():
+    import pydantic
+    import pytest
+
+    from ragkit.config import RAGConfig
+
+    with pytest.raises(pydantic.ValidationError, match="no_such_module"):
+        RAGConfig.model_validate({"plugins": ["no_such_module"]})

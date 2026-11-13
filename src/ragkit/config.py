@@ -7,6 +7,7 @@ ablation variant lists only what it changes. Secrets and model choice live in th
 from __future__ import annotations
 
 import hashlib
+import importlib
 import json
 from pathlib import Path
 from typing import Annotated, Any, Literal
@@ -41,6 +42,10 @@ class AbstentionConfig(BaseModel):
 class RAGConfig(BaseModel):
     name: str = "default"
     description: str = ""
+    plugins: list[str] = Field(
+        default_factory=list,
+        description="Modules imported first, so project-specific stages can register themselves.",
+    )
     corpus: CorpusConfig = CorpusConfig()
     chunker: StageSpec = StageSpec(impl="markdown_heading")
     embedder: StageSpec = StageSpec(impl="hashing")
@@ -52,6 +57,16 @@ class RAGConfig(BaseModel):
     verifier: StageSpec = StageSpec(impl="none")
     judge: StageSpec = StageSpec(impl="lexical")
     artifacts_dir: str = "artifacts"
+
+    @field_validator("plugins")
+    @classmethod
+    def _import_plugins(cls, modules: list[str]) -> list[str]:
+        for module in modules:
+            try:
+                importlib.import_module(module)
+            except ImportError as e:
+                raise ValueError(f"Cannot import plugin {module!r}: {e}") from e
+        return modules
 
     def index_key(self) -> str:
         """Hash of everything that changes the stored index. Variants sharing it share the index."""
