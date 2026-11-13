@@ -8,6 +8,8 @@ requires-python = ">=3.11"
 dependencies = [
     "numpy>=2.4.6",
     "pydantic>=2.14.3",
+    "pydantic-settings>=2.16.3",
+    "python-dotenv>=1.2.4",
     "pyyaml>=6.0.3",
 ]
 
