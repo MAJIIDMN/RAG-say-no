@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Annotated, Any, Literal
 
 import yaml
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 from ragkit.core.registry import StageSpec
@@ -72,7 +72,7 @@ class LLMSettings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    provider: Literal["openai_compatible", "anthropic"] = "openai_compatible"
+    provider: Literal["openai_compatible", "anthropic", "fake"] = "openai_compatible"
     model: str = ""
     base_url: str | None = None
     api_key: str | None = None
@@ -86,10 +86,13 @@ class LLMSettings(BaseSettings):
     def _split(cls, v: Any) -> Any:
         return [m.strip() for m in v.split(",") if m.strip()] if isinstance(v, str) else v
 
-    @field_validator("base_url", "api_key", mode="before")
+    @model_validator(mode="before")
     @classmethod
-    def _empty_is_none(cls, v: Any) -> Any:
-        return v or None
+    def _empty_is_unset(cls, data: Any) -> Any:
+        # `KEY=` lines in .env mean "not set", not "empty string".
+        if isinstance(data, dict):
+            return {k: v for k, v in data.items() if v != ""}
+        return data
 
 
 def llm_settings(role: Literal["generator", "judge"] = "generator") -> LLMSettings:

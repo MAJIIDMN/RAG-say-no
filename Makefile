@@ -1,22 +1,31 @@
 # Keep system-wide PYTHONPATH entries (e.g. ROS) out of the project venv.
 unexport PYTHONPATH
+# --no-sync: keep whichever extras `make setup` / `make setup-ml` installed.
+RUN := uv run --no-sync
 
-.PHONY: setup hooks test lint format
+.PHONY: setup setup-ml hooks test test-slow lint format
 
-setup:
-	uv sync
+setup:            ## core + LLM SDKs + dev tools; enough for tests and the offline baseline
+	uv sync --extra llm
+	@test -f .env || cp .env.example .env
+
+setup-ml:         ## + sentence-transformers and CPU torch for real embedders/rerankers
+	uv sync --extra llm --extra ml
 	@test -f .env || cp .env.example .env
 
 hooks:
-	uvx pre-commit install
+	$(RUN) pre-commit install
 
 test:
-	uv run pytest
+	$(RUN) pytest
+
+test-slow:        ## real embedding/reranker models (needs setup-ml, downloads ~200 MB once)
+	RAGKIT_SLOW=1 $(RUN) pytest tests/integration
 
 lint:
-	uv run ruff check src tests
-	uv run ruff format --check src tests
+	$(RUN) ruff check src tests
+	$(RUN) ruff format --check src tests
 
 format:
-	uv run ruff check --fix src tests
-	uv run ruff format src tests
+	$(RUN) ruff check --fix src tests
+	$(RUN) ruff format src tests

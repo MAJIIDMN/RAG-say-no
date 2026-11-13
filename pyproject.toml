@@ -16,12 +16,21 @@ dependencies = [
 
 [project.optional-dependencies]
 ml = ["sentence-transformers>=3.0", "torch>=2.3"]
+llm = [
+    "anthropic>=2.8.0",
+    "openai>=3.50.0",
+]
 
 [project.scripts]
 ragkit = "ragkit.cli:app"
 
 [dependency-groups]
-dev = ["pytest>=8", "pytest-cov>=5", "ruff>=0.6"]
+dev = [
+    "pre-commit>=4.7.0",
+    "pytest>=8",
+    "pytest-cov>=5",
+    "ruff>=0.6",
+]
 
 [build-system]
 requires = ["hatchling"]

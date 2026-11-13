@@ -55,3 +55,11 @@ def test_judge_settings_fall_back_to_generator_env(monkeypatch):
     gen, judge = llm_settings("generator"), llm_settings("judge")
     assert gen.model == "cheap-model" and gen.structured_modes == ["json_object", "text"]
     assert judge.model == "judge-model" and judge.api_key == "k"
+
+
+def test_empty_env_values_mean_unset(monkeypatch):
+    monkeypatch.setenv("LLM_MODEL", "m")
+    monkeypatch.setenv("JUDGE_PROVIDER", "")
+    monkeypatch.setenv("JUDGE_BASE_URL", "")
+    judge = llm_settings("judge")
+    assert judge.provider == "openai_compatible" and judge.model == "m"
