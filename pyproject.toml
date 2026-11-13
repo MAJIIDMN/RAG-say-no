@@ -5,7 +5,11 @@ description = "Grounded RAG that cites every claim and abstains when the documen
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "numpy>=2.4.6",
+    "pydantic>=2.14.3",
+    "pyyaml>=6.0.3",
+]
 
 [project.scripts]
 ragkit = "ragkit.cli:app"
