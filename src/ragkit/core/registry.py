@@ -25,6 +25,11 @@ class _NoParams(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
+def _load_builtins() -> None:
+    # Deferred import: implementation modules import this module to register themselves.
+    import ragkit.builtins  # noqa: F401
+
+
 class Registry(Generic[T]):
     def __init__(self, kind: str):
         self.kind = kind
@@ -41,6 +46,7 @@ class Registry(Generic[T]):
         return deco
 
     def names(self) -> list[str]:
+        _load_builtins()
         return sorted(self._entries)
 
     def params_model(self, name: str) -> type[BaseModel]:
@@ -55,6 +61,8 @@ class Registry(Generic[T]):
         return factory(params_model.model_validate(spec.params), **deps)
 
     def _lookup(self, name: str) -> tuple[Callable[..., T], type[BaseModel]]:
+        if name not in self._entries:
+            _load_builtins()
         if name not in self._entries:
             raise KeyError(f"Unknown {self.kind} '{name}'. Available: {', '.join(self.names())}")
         return self._entries[name]
