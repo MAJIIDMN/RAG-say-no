@@ -121,7 +121,8 @@ def tune(
         _fail(f"No calib items in {eval_set}")
     _require_index(cfg)
     result = tune_threshold(cfg, items, runs_dir, max_over_refusal, workers=workers)
-    out = write_tuned_config(config, result.threshold, write or Path("configs/tuned") / config.name)
+    target = write or Path("configs/tuned") / config.name
+    out = write_tuned_config(config, result.threshold, target, parse_overrides(override or []))
     typer.echo(json.dumps(result.point, indent=2))
     typer.echo(f"Tuned config: {out}  (curve: {result.run_dir / 'curve.json'})")
 

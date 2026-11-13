@@ -21,6 +21,7 @@ import yaml
 
 from ragkit.config import LLMSettings, RAGConfig, llm_settings
 from ragkit.core.registry import JUDGES, VERIFIERS
+from ragkit.core.schemas import Chunk
 from ragkit.core.stages import Judge, Verifier
 from ragkit.eval import metrics as M
 from ragkit.eval.dataset import EvalItem, describe
@@ -36,7 +37,11 @@ def cost_usd(usage: dict[str, int], settings: LLMSettings) -> float:
 
 
 def evaluate_item(
-    item: EvalItem, pipe: RAGPipeline, judge: Judge, faithfulness: Verifier | None = None
+    item: EvalItem,
+    pipe: RAGPipeline,
+    judge: Judge,
+    faithfulness: Verifier | None = None,
+    chunks: dict[str, Chunk] | None = None,
 ) -> dict[str, Any]:
     rec: dict[str, Any] = {
         "id": item.id,
@@ -52,7 +57,7 @@ def evaluate_item(
         rec["error"] = f"{type(e).__name__}: {e}"
         return rec
 
-    chunks = pipe.index.by_id()
+    chunks = chunks if chunks is not None else pipe.index.by_id()
     candidates = [chunks[c] for c in resp.diagnostics.get("candidate_ids", []) if c in chunks]
     context = [sc.chunk for sc in resp.retrieved]
     rec.update(
@@ -81,17 +86,25 @@ def evaluate_item(
         rec["context_recall"] = ctx[f"recall@{max(len(context), 1)}"]
 
     rec["correct"], judge_usage = False, {}
-    if resp.answered and item.answerable:
-        verdict = judge.judge(item.question, item.reference_answer, resp.answer)
-        rec.update(correct=verdict.correct, judge_reason=verdict.reason)
-        judge_usage = dict(verdict.usage)
-    if resp.answered and faithfulness is not None:
-        check = faithfulness.verify(resp.claims, resp.retrieved)
-        rec["faithful"] = check.verdicts
-        for k, v in check.usage.items():
-            judge_usage[k] = judge_usage.get(k, 0) + v
+    try:
+        if resp.answered and item.answerable:
+            verdict = judge.judge(item.question, item.reference_answer, resp.answer)
+            rec.update(correct=verdict.correct, judge_reason=verdict.reason)
+            judge_usage = dict(verdict.usage)
+        if resp.answered and faithfulness is not None:
+            check = faithfulness.verify(resp.claims, resp.retrieved)
+            rec["faithful"] = check.verdicts
+            for k, v in check.usage.items():
+                judge_usage[k] = judge_usage.get(k, 0) + v
+    except Exception as e:  # noqa: BLE001 - keep the answer; drop the item from judged metrics
+        rec["judge_error"] = f"{type(e).__name__}: {e}"
     rec["judge_usage"] = judge_usage
     return rec
+
+
+def _scored(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Records whose correctness is known: a judge failure leaves it unknown."""
+    return [r for r in records if "error" not in r and "judge_error" not in r]
 
 
 def aggregate(records: list[dict[str, Any]]) -> dict[str, Any]:
@@ -107,8 +120,16 @@ def aggregate(records: list[dict[str, Any]]) -> dict[str, Any]:
     gold = [r["answerable"] for r in ok]
     answered = [r["answered"] for r in ok]
     out.update(M.abstention_metrics([not g for g in gold], [not a for a in answered]))
-    out["crag_score"] = M.mean(M.crag_scores(gold, answered, [r["correct"] for r in ok]))
-    judged = [r for r in answerable if r["answered"]]
+    scored = _scored(ok)
+    out["n_judge_errors"] = len(ok) - len(scored)
+    out["crag_score"] = M.mean(
+        M.crag_scores(
+            [r["answerable"] for r in scored],
+            [r["answered"] for r in scored],
+            [r["correct"] for r in scored],
+        )
+    )
+    judged = [r for r in scored if r["answerable"] and r["answered"]]
     out["accuracy_when_answered"] = M.mean([float(r["correct"]) for r in judged])
 
     faithful = [v for r in ok for v in r.get("faithful", [])]
@@ -166,9 +187,12 @@ def run_eval(
     out.mkdir(parents=True, exist_ok=True)
     (out / "config.yaml").write_text(yaml.safe_dump(cfg.model_dump(), sort_keys=False))
 
+    chunks = pipe.index.by_id()
     t0 = time.perf_counter()
     with ThreadPoolExecutor(max_workers=max(1, workers)) as pool:
-        records = list(pool.map(lambda it: evaluate_item(it, pipe, judge, faithfulness), items))
+        records = list(
+            pool.map(lambda it: evaluate_item(it, pipe, judge, faithfulness, chunks), items)
+        )
     for r in records:
         if "error" not in r:
             r["cost_usd"] = cost_usd(r["usage"], gen_prices)
@@ -179,8 +203,8 @@ def run_eval(
     summary = aggregate(records)
     ok = [r for r in records if "error" not in r]
     if (not cfg.abstention.enabled or cfg.abstention.min_score <= 0) and ok:
-        (out / "curve.json").write_text(json.dumps(M.selective_curve(ok), indent=2))
-        answered = [r for r in ok if r["answered"]]
+        (out / "curve.json").write_text(json.dumps(M.selective_curve(_scored(ok)), indent=2))
+        answered = [r for r in _scored(ok) if r["answered"]]
         summary["aurc"] = M.aurc(
             [r["confidence"] for r in answered], [not r["correct"] for r in answered]
         )

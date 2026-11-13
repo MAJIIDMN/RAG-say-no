@@ -91,3 +91,18 @@ def test_faithfulness_is_reported_when_a_claim_checker_is_given(cfg, tmp_path):
     out = run_eval(cfg, items, runs_dir=tmp_path / "runs", faithfulness=checker, workers=1)
     m = json.loads((out / "metrics.json").read_text())
     assert m["faithfulness"] == 0.5
+
+
+def test_a_failing_judge_marks_the_item_but_keeps_the_run(cfg, tmp_path):
+    class BrokenJudge:
+        def judge(self, question, reference, answer):
+            raise TimeoutError("judge timed out")
+
+    build_index(cfg)
+    items = load_eval_set(ROOT / "evals/datasets/toy.jsonl", split="dev")
+    out = run_eval(cfg, items, runs_dir=tmp_path / "runs", judge=BrokenJudge(), workers=2)
+    preds = [json.loads(line) for line in (out / "predictions.jsonl").read_text().splitlines()]
+    judged = [p for p in preds if p["answerable"] and p["answered"]]
+    assert judged and all("TimeoutError" in p["judge_error"] for p in judged)
+    m = json.loads((out / "metrics.json").read_text())
+    assert m["n_errors"] == 0 and m["n_judge_errors"] == len(judged)

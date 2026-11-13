@@ -9,7 +9,7 @@ from pathlib import Path
 
 import yaml
 
-from ragkit.config import RAGConfig
+from ragkit.config import RAGConfig, deep_merge
 from ragkit.core.stages import Embedder, Judge
 from ragkit.eval import metrics as M
 from ragkit.eval.dataset import EvalItem
@@ -57,15 +57,18 @@ def tune_threshold(
     return TuneResult(threshold=point["threshold"], point=point, run_dir=run_dir)
 
 
-def write_tuned_config(base: str | Path, threshold: float, out: str | Path) -> Path:
-    """A config that extends `base` and only changes the score-gate threshold."""
+def write_tuned_config(
+    base: str | Path, threshold: float, out: str | Path, overrides: dict | None = None
+) -> Path:
+    """A config that extends `base` with the overrides used while tuning, plus the threshold."""
     base, out = Path(base), Path(out)
     name = (yaml.safe_load(base.read_text()) or {}).get("name", base.stem)
     out.parent.mkdir(parents=True, exist_ok=True)
+    gate = {"abstention": {"enabled": True, "min_score": round(float(threshold), 4)}}
     doc = {
         "extends": os.path.relpath(base, out.parent),
         "name": f"{name}-tuned",
-        "abstention": {"enabled": True, "min_score": round(float(threshold), 4)},
+        **deep_merge(overrides or {}, gate),
     }
     out.write_text(yaml.safe_dump(doc, sort_keys=False))
     return out

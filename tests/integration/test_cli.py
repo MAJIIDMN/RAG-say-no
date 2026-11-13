@@ -77,6 +77,24 @@ def test_eval_tune_and_report(cli, tmp_path):
     assert out.exit_code == 0, out.output
     assert yaml.safe_load(tuned.read_text())["abstention"]["enabled"] is True
 
+    out = cli(
+        "tune",
+        "-c",
+        "configs/toy.yaml",
+        "-e",
+        "evals/datasets/toy.jsonl",
+        "--runs-dir",
+        runs,
+        "--write",
+        str(tuned),
+        "-o",
+        "retrieval.context_size=2",
+    )
+    assert out.exit_code == 0, out.output
+    from ragkit.config import load_config
+
+    assert load_config(tuned).retrieval.context_size == 2
+
     out = cli("report", "--runs-dir", runs, "--split", "test", overrides=False)
     assert out.exit_code == 0 and "| toy |" in out.output
 
