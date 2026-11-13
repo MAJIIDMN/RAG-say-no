@@ -73,6 +73,12 @@ class Verification(BaseModel):
     usage: dict[str, int] = Field(default_factory=dict)
 
 
+class Judgement(BaseModel):
+    correct: bool
+    reason: str = ""
+    usage: dict[str, int] = Field(default_factory=dict)
+
+
 # Public response.
 
 

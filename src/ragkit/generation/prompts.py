@@ -38,6 +38,13 @@ Decide whether the claim is fully supported by the evidence passages. It is supp
 part of it follows from the evidence alone; outside knowledge does not count.
 """
 
+JUDGE_CORRECTNESS = """\
+You grade a candidate answer against a reference answer to the same question. The candidate is
+correct if it states the key facts of the reference without contradicting it. Extra correct detail is
+fine. A missing key fact, a wrong number or a contradiction makes it incorrect. Wording does not
+matter.
+"""
+
 
 def format_context(context: list[ScoredChunk]) -> str:
     blocks = []
@@ -55,3 +62,10 @@ def answer_user(question: str, context: list[ScoredChunk]) -> str:
 def verify_user(claim: str, evidence: list[str]) -> str:
     ev = "\n\n".join(f"[E{i}]\n{t}" for i, t in enumerate(evidence, start=1))
     return f"<evidence>\n{ev}\n</evidence>\n\n<claim>{claim}</claim>"
+
+
+def judge_user(question: str, reference: str, answer: str) -> str:
+    return (
+        f"<question>{question}</question>\n<reference>{reference}</reference>\n"
+        f"<candidate>{answer}</candidate>"
+    )

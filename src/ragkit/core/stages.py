@@ -7,7 +7,15 @@ from typing import Protocol, TypeVar
 import numpy as np
 from pydantic import BaseModel
 
-from ragkit.core.schemas import Chunk, Claim, Document, Generation, ScoredChunk, Verification
+from ragkit.core.schemas import (
+    Chunk,
+    Claim,
+    Document,
+    Generation,
+    Judgement,
+    ScoredChunk,
+    Verification,
+)
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -58,4 +66,4 @@ class Verifier(Protocol):
 class Judge(Protocol):
     """Eval only: does `answer` state the key facts of `reference`?"""
 
-    def correct(self, question: str, reference: str, answer: str) -> bool: ...
+    def judge(self, question: str, reference: str, answer: str) -> Judgement: ...
