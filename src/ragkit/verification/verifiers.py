@@ -95,9 +95,12 @@ class LLMVerifier:
             if not evidence:
                 out.append(False)
                 continue
-            verdict, usage = self.llm.generate_structured(
-                prompts.VERIFY_CLAIM, prompts.verify_user(cl.text, evidence), Entailment
-            )
+            try:
+                verdict, usage = self.llm.generate_structured(
+                    prompts.VERIFY_CLAIM, prompts.verify_user(cl.text, evidence), Entailment
+                )
+            except Exception as e:
+                return Verification(verdicts=[], usage=total, error=f"{type(e).__name__}: {e}")
             for k, v in usage.items():
                 total[k] = total.get(k, 0) + v
             out.append(verdict.supported)

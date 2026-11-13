@@ -55,3 +55,13 @@ def test_model_failure_is_its_own_reason():
     failed = Generation(answer=None, error="StructuredOutputError: bad json")
     decision = AbstentionPolicy(AbstentionConfig(enabled=False)).after_generation(failed)
     assert decision.reason == "generation_failed" and "bad json" in decision.detail
+
+
+def test_failing_sufficiency_check_abstains_instead_of_raising():
+    def boom(s, u, schema):
+        raise RuntimeError("provider down")
+
+    decision = AbstentionPolicy(
+        AbstentionConfig(sufficiency_check=True), FakeLLMClient(boom)
+    ).before_generation("q", CTX)
+    assert decision.reason == "sufficiency_check_failed" and "provider down" in decision.detail

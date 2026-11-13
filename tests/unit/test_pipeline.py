@@ -66,3 +66,13 @@ def test_fabricated_quote_is_dropped_and_turns_into_abstention(pipe):
 def test_llm_is_never_built_for_the_offline_config(pipe, monkeypatch):
     monkeypatch.setenv("LLM_MODEL", "")
     assert pipe().answer("CORSMiddleware origins").answered
+
+
+def test_failing_llm_verifier_abstains_instead_of_raising(pipe):
+    def boom(s, u, schema):
+        raise RuntimeError("provider down")
+
+    resp = pipe(config(verifier={"impl": "llm"}), FakeLLMClient(boom)).answer(
+        "When do BackgroundTasks run after the response?"
+    )
+    assert not resp.answered and resp.abstain_reason == "verification_failed"

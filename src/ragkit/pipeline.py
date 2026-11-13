@@ -122,6 +122,8 @@ class RAGPipeline:
         with timed("verify"):
             verification = self.verifier.verify(claims, context)
         _add(usage, verification.usage)
+        if verification.error:
+            return finish(Decision("verification_failed", verification.error))
         kept = [c for c, ok in zip(claims, verification.verdicts, strict=True) if ok]
         diag["claims_total"], diag["claims_supported"] = len(claims), len(kept)
         if not kept:

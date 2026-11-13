@@ -71,6 +71,7 @@ class Generation(BaseModel):
 class Verification(BaseModel):
     verdicts: list[bool] = Field(description="One per claim: supported by the passages it cites.")
     usage: dict[str, int] = Field(default_factory=dict)
+    error: str | None = None
 
 
 class Judgement(BaseModel):

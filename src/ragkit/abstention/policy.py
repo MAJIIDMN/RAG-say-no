@@ -42,9 +42,12 @@ class AbstentionPolicy:
         if self.cfg.sufficiency_check:
             if self.llm is None:
                 raise ValueError("abstention.sufficiency_check needs an LLM client")
-            verdict, usage = self.llm.generate_structured(
-                prompts.SUFFICIENCY, prompts.answer_user(query, context), Sufficiency
-            )
+            try:
+                verdict, usage = self.llm.generate_structured(
+                    prompts.SUFFICIENCY, prompts.answer_user(query, context), Sufficiency
+                )
+            except Exception as e:
+                return Decision("sufficiency_check_failed", f"{type(e).__name__}: {e}")
             if not verdict.sufficient:
                 return Decision("insufficient_context", verdict.reason, usage)
             return Decision(usage=usage)
