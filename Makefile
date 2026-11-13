@@ -3,7 +3,7 @@ unexport PYTHONPATH
 # --no-sync: keep whichever extras `make setup` / `make setup-ml` installed.
 RUN := uv run --no-sync
 
-.PHONY: setup setup-ml hooks test test-slow lint format
+.PHONY: setup setup-ml hooks test test-slow lint format data
 
 setup:            ## core + LLM SDKs + plotting + dev tools; enough for tests and the offline baseline
 	uv sync --extra llm --extra evals
@@ -23,9 +23,12 @@ test-slow:        ## real embedding/reranker models (needs setup-ml, downloads ~
 	RAGKIT_SLOW=1 $(RUN) pytest tests/integration
 
 lint:
-	$(RUN) ruff check src tests
-	$(RUN) ruff format --check src tests
+	$(RUN) ruff check src tests scripts
+	$(RUN) ruff format --check src tests scripts
 
 format:
-	$(RUN) ruff check --fix src tests
-	$(RUN) ruff format src tests
+	$(RUN) ruff check --fix src tests scripts
+	$(RUN) ruff format src tests scripts
+
+data:             ## clone FastAPI docs at the pinned commit into data/raw and preprocess to data/processed
+	$(RUN) python scripts/prepare_fastapi_docs.py
