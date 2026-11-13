@@ -5,12 +5,12 @@ RUN := uv run --no-sync
 
 .PHONY: setup setup-ml hooks test test-slow lint format
 
-setup:            ## core + LLM SDKs + dev tools; enough for tests and the offline baseline
-	uv sync --extra llm
+setup:            ## core + LLM SDKs + plotting + dev tools; enough for tests and the offline baseline
+	uv sync --extra llm --extra evals
 	@test -f .env || cp .env.example .env
 
 setup-ml:         ## + sentence-transformers and CPU torch for real embedders/rerankers
-	uv sync --extra llm --extra ml
+	uv sync --extra llm --extra ml --extra evals
 	@test -f .env || cp .env.example .env
 
 hooks:

@@ -20,6 +20,7 @@ llm = [
     "anthropic>=2.8.0",
     "openai>=3.50.0",
 ]
+evals = ["matplotlib>=3.9"]
 
 [project.scripts]
 ragkit = "ragkit.cli:app"
