@@ -1,4 +1,4 @@
-"""Abstention gates (ADR-0006). Every refusal carries a reason so reports can split them by gate."""
+"""Abstention gates. Every refusal carries a reason so reports can split them by gate."""
 
 from __future__ import annotations
 

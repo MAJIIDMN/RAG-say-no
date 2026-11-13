@@ -1,6 +1,6 @@
 """Persisted index: chunks.jsonl + vectors.npy + manifest.json, keyed by `RAGConfig.index_key()`.
 
-Dense search is exact brute force over a numpy matrix (ADR-0002).
+Dense search is exact brute force over a numpy matrix.
 """
 
 from __future__ import annotations

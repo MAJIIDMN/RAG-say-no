@@ -1,6 +1,6 @@
 """Fetch the FastAPI docs at a pinned commit and turn them into plain Markdown for `ragkit ingest`.
 
-Project-specific (ADR-0001): this lives in scripts/, not in the reusable ragkit package.
+Project-specific: this lives in scripts/, not in the reusable ragkit package.
 
     uv run python scripts/prepare_fastapi_docs.py            # clone into data/raw, write data/processed
     uv run python scripts/prepare_fastapi_docs.py --no-fetch # reuse an existing clone

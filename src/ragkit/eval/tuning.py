@@ -1,4 +1,4 @@
-"""Pick the score-gate threshold on the calib split only (ADR-0010)."""
+"""Pick the score-gate threshold on the calib split only; test is for reporting only."""
 
 from __future__ import annotations
 

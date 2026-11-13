@@ -1,4 +1,4 @@
-"""Eval set: JSONL, one item per line (ADR-0010).
+"""Eval set: JSONL, one item per line (protocol in docs/architecture.md).
 
 Relevance comes from `evidence`, verbatim spans of the source documents, so the set stays valid when
 chunking changes. `group` (usually the source page) keeps related questions in one split.

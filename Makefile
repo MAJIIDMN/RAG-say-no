@@ -52,7 +52,7 @@ ablation:         ## E001-E007 on ABLATION_SET/SPLIT (needs make data, setup-ml 
 	done
 
 report:           ## ablation table from the newest run per config
-	$(RUN) ragkit report --split $(SPLIT) --prefix E --out docs/ablation_$(SPLIT).md
+	$(RUN) ragkit report --split $(SPLIT) --prefix E --out artifacts/reports/ablation_$(SPLIT).md
 
 serve: ingest     ## POST /ask and GET /health on http://127.0.0.1:8000 for CONFIG
 	$(RUN) ragkit serve -c $(CONFIG)

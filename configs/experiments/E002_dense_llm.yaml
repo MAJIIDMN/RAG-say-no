@@ -1,4 +1,4 @@
-# Dense retrieval + LLM with the naive prompt and no abstention: the reference baseline (PRD §3).
+# Dense retrieval + LLM with the naive prompt and no abstention: the reference baseline.
 extends: ../base.yaml
 name: E002_dense_llm
 embedder: {impl: sentence_transformers}

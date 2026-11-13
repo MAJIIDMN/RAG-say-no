@@ -1,4 +1,4 @@
-"""Claim verification (ADR-0007): drop answer sentences their citations do not support."""
+"""Claim verification: drop answer sentences their citations do not support."""
 
 from __future__ import annotations
 
