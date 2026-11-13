@@ -1,10 +1,14 @@
 # Keep system-wide PYTHONPATH entries (e.g. ROS) out of the project venv.
 unexport PYTHONPATH
 
-.PHONY: setup test lint format
+.PHONY: setup hooks test lint format
 
 setup:
 	uv sync
+	@test -f .env || cp .env.example .env
+
+hooks:
+	uvx pre-commit install
 
 test:
 	uv run pytest
