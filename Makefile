@@ -7,7 +7,7 @@ EVALSET ?= evals/datasets/toy.jsonl
 SPLIT ?= test
 ABLATION_SET ?= evals/datasets/fastapi.jsonl
 
-.PHONY: setup setup-ml hooks test test-slow lint format data ingest eval tune ablation report
+.PHONY: setup setup-ml hooks test test-slow lint format data ingest eval tune ablation report serve
 
 setup:            ## core + LLM SDKs + plotting + API + dev tools; enough for tests and the offline baseline
 	uv sync --extra llm --extra evals --extra api
@@ -53,3 +53,6 @@ ablation:         ## E001-E007 on ABLATION_SET/SPLIT (needs make data, setup-ml 
 
 report:           ## ablation table from the newest run per config
 	$(RUN) ragkit report --split $(SPLIT) --prefix E --out docs/ablation_$(SPLIT).md
+
+serve: ingest     ## POST /ask and GET /health on http://127.0.0.1:8000 for CONFIG
+	$(RUN) ragkit serve -c $(CONFIG)
