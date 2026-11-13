@@ -13,6 +13,19 @@ from ragkit.ingest.chunkers import _TOKEN
 _SENTENCE = re.compile(r"(?<=[.!?])\s+")
 
 
+def _prose_sentences(text: str) -> list[str]:
+    """Sentences from prose lines only: headings and fenced code are not answers."""
+    out, in_code = [], False
+    for line in text.splitlines():
+        if line.lstrip().startswith("```"):
+            in_code = not in_code
+            continue
+        if in_code or line.lstrip().startswith("#"):
+            continue
+        out += [s.strip() for s in _SENTENCE.split(line) if s.strip()]
+    return out
+
+
 class ExtractiveParams(BaseModel):
     model_config = ConfigDict(extra="forbid")
     min_overlap: float = Field(0.0, description="Answer only above this query-token overlap.")
@@ -28,10 +41,7 @@ class ExtractiveGenerator:
         q = {t for t in _TOKEN.findall(query.lower()) if t.isalnum()}
         best: tuple[float, int, str] = (0.0, 0, "")
         for i, sc in enumerate(context, start=1):
-            for sentence in _SENTENCE.split(sc.chunk.text):
-                sentence = sentence.strip()
-                if not sentence or sentence.startswith(("#", "```")):
-                    continue
+            for sentence in _prose_sentences(sc.chunk.text):
                 overlap = len(q & set(_TOKEN.findall(sentence.lower()))) / (len(q) or 1)
                 if overlap > best[0]:
                     best = (overlap, i, sentence)

@@ -65,3 +65,16 @@ def test_llm_generator_turns_model_failure_into_error_not_exception():
 
     gen = GENERATORS.create({"impl": "llm"}, llm=FakeLLMClient(broken)).generate("q", CONTEXT)
     assert gen.answer is None and "StructuredOutputError" in gen.error
+
+
+def test_extractive_reads_sentences_that_follow_a_heading_and_skips_code():
+    text = (
+        "## Retries\n\nA failed job is retried up to 3 times by default.\n\n"
+        "```python\nqueue.retry(times=3)  # retried times default\n```\n\n"
+        "## Timeout\n\nA job that runs longer is stopped and marked as failed."
+    )
+    ctx = [ScoredChunk(chunk=Chunk(chunk_id="c", doc_id="d", text=text), score=1.0)]
+    gen = GENERATORS.create({"impl": "extractive"}).generate(
+        "How many times is a failed job retried by default?", ctx
+    )
+    assert gen.answer.claims[0].text == "A failed job is retried up to 3 times by default."
