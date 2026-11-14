@@ -52,3 +52,9 @@ def test_plot_curve_writes_png(tmp_path):
     )
     out = plot_curve(curve, tmp_path / "plot.png", chosen=0.5)
     assert out.stat().st_size > 0
+
+
+def test_ablation_table_shows_correctness_coverage_and_abstention_precision_recall(tmp_path):
+    header = ablation_table([run(tmp_path, "E001", "20260101-000000")]).splitlines()[0]
+    for title in ("Correctness", "Coverage", "Abstain precision", "Abstain recall"):
+        assert f"| {title} |" in header

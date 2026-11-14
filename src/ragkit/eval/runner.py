@@ -130,7 +130,9 @@ def aggregate(records: list[dict[str, Any]]) -> dict[str, Any]:
             [r["correct"] for r in scored],
         )
     )
-    judged = [r for r in scored if r["answerable"] and r["answered"]]
+    gold_scored = [r for r in scored if r["answerable"]]
+    out["correctness"] = M.mean([float(r["answered"] and r["correct"]) for r in gold_scored])
+    judged = [r for r in gold_scored if r["answered"]]
     out["accuracy_when_answered"] = M.mean([float(r["correct"]) for r in judged])
 
     faithful = [v for r in ok for v in r.get("faithful", [])]

@@ -48,10 +48,10 @@ Coverage vs accuracy curve (`docs/images/coverage_accuracy.png`): TBD, made with
 **Smoke test on sample data, not a final result.** The toy corpus has 3 fictional pages; its `test`
 split has 6 questions, 2 of them unanswerable:
 
-| Config | Coverage | Accuracy (answered) | Over-refusal | Unanswerable answered | CRAG score |
-|---|---|---|---|---|---|
-| `toy`, score gate off (`make eval`) | 1.000 | 0.750 | 0.000 | 1.000 | 0.000 |
-| `toy-tuned`, threshold 0.625 picked on `calib` (`make tune`) | 0.333 | 1.000 | 0.500 | 0.000 | 0.667 |
+| Config | Coverage | Correctness | Accuracy (answered) | Over-refusal | Unanswerable answered | CRAG score |
+|---|---|---|---|---|---|---|
+| `toy`, score gate off (`make eval`) | 1.000 | 0.750 | 0.750 | 0.000 | 1.000 | 0.000 |
+| `toy-tuned`, threshold 0.625 picked on `calib` (`make tune`) | 0.333 | 0.500 | 1.000 | 0.500 | 0.000 | 0.667 |
 
 These rows only show that the pipeline, the metrics and calib-only tuning run from a clean clone.
 The trade-off already shows: the gate stops both made-up answers and also refuses half of the
@@ -212,7 +212,9 @@ ragkit evalset check -c configs/toy.yaml -e evals/datasets/toy.jsonl
 | Context recall | Share of gold `evidence` spans that reach the generator |
 | Faithfulness | Share of claims supported by the passages they cite, per the LLM judge |
 | Citation precision | Share of quotes found verbatim in the cited passage |
+| Correctness | Answerable questions that got a correct answer, per the judge; a refusal counts as a miss |
 | Accuracy (answered) | Correct answers per the judge, among answerable questions that got an answer |
+| Coverage | Share of all questions that got an answer |
 | Abstention P/R/F1 | The positive class is "should refuse" |
 | Over-refusal | Answerable questions that were refused |
 | Unanswerable answered | Unanswerable questions that still got an answer (hallucination risk) |
@@ -220,8 +222,8 @@ ragkit evalset check -c configs/toy.yaml -e evals/datasets/toy.jsonl
 | AURC | Area under the risk–coverage curve, ordered by confidence |
 
 Each run writes `runs/<time>_<config>_<split>/` with `config.yaml`, `predictions.jsonl`,
-`metrics.json` (including git commit, corpus digest and source, prompt version and model) and, when the score gate is off,
-`curve.json`. `ragkit tune` reads only the `calib` split, replays the score gate at every threshold
+`metrics.json` (including git commit, corpus digest and source, prompt version and model) and,
+when the score gate is off, `curve.json`. `ragkit tune` reads only the `calib` split, replays the score gate at every threshold
 and writes `configs/tuned/<config>.yaml`. `make report` builds the ablation table from the newest
 run per config. The `lexical` judge is an offline proxy only; LLM judge numbers get reported only
 after an audit against 50 hand labels.
