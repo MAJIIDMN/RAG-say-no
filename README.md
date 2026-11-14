@@ -109,13 +109,13 @@ Trimmed output from a clean clone:
 
 ```text
 All checks passed!
-67 files already formatted
-100 passed, 2 skipped in 3.43s
+69 files already formatted
+110 passed, 2 skipped in 3.36s
 ...
   "recall@5": 1.0,
   "unanswerable_answered_rate": 1.0,
   "citation_precision": 1.0,
-Run: runs/20261114-011932_toy_test
+Run: runs/20261114-100132_toy_test
 ```
 
 The `ragkit` command lives in the venv. Activate it first, because `uv run` without `--no-sync`
