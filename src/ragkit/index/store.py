@@ -1,4 +1,5 @@
 """Persisted index: chunks.jsonl + vectors.npy + manifest.json, keyed by `RAGConfig.index_key()`.
+A cached index is rebuilt when the corpus content digest changes.
 
 Dense search is exact brute force over a numpy matrix.
 """
@@ -18,7 +19,7 @@ from ragkit.core.registry import CHUNKERS, EMBEDDERS, StageSpec
 from ragkit.core.schemas import Chunk
 from ragkit.core.stages import Embedder
 from ragkit.ingest.chunkers import count_tokens
-from ragkit.ingest.loaders import load_documents
+from ragkit.ingest.loaders import corpus_fingerprint, load_documents
 
 
 @dataclass
@@ -47,10 +48,11 @@ def get_embedder(spec: StageSpec) -> Embedder:
 
 def build_index(cfg: RAGConfig, force: bool = False) -> Index:
     out = cfg.index_dir()
-    if (out / "manifest.json").exists() and not force:
+    docs = load_documents(cfg.corpus)
+    fingerprint = corpus_fingerprint(docs)
+    if not force and read_manifest(cfg).get("corpus_fingerprint") == fingerprint:
         return load_index(cfg)
     t0 = time.perf_counter()
-    docs = load_documents(cfg.corpus)
     chunker = CHUNKERS.create(cfg.chunker)
     chunks = [c for d in docs for c in chunker.chunk(d)]
     vectors = get_embedder(cfg.embedder).embed_documents([c.indexed_text for c in chunks])
@@ -61,6 +63,7 @@ def build_index(cfg: RAGConfig, force: bool = False) -> Index:
     manifest = {
         "index_key": cfg.index_key(),
         "corpus": cfg.corpus.model_dump(),
+        "corpus_fingerprint": fingerprint,
         "chunker": cfg.chunker.model_dump(),
         "embedder": cfg.embedder.model_dump(),
         "n_documents": len(docs),
@@ -73,6 +76,12 @@ def build_index(cfg: RAGConfig, force: bool = False) -> Index:
     # Manifest last: its presence marks a complete index.
     (out / "manifest.json").write_text(json.dumps(manifest, indent=2))
     return Index(chunks=chunks, vectors=vectors, path=out)
+
+
+def read_manifest(cfg: RAGConfig) -> dict:
+    """The index manifest, or {} when no index is built."""
+    path = cfg.index_dir() / "manifest.json"
+    return json.loads(path.read_text()) if path.exists() else {}
 
 
 def load_index(cfg: RAGConfig) -> Index:

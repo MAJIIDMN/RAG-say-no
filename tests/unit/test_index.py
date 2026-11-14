@@ -1,3 +1,6 @@
+import json
+from pathlib import Path
+
 import numpy as np
 import pytest
 
@@ -45,3 +48,16 @@ def test_build_index_persists_and_reuses(cfg):
 def test_load_index_without_build_explains_what_to_run(cfg):
     with pytest.raises(FileNotFoundError, match="ragkit ingest"):
         load_index(cfg)
+
+
+def test_manifest_records_corpus_digest_and_sources(cfg):
+    corpus = cfg.corpus.path
+    (Path(corpus) / "c.md").write_text("---\nsource: docs@abc1234\n---\n# Gamma\n\nGamma text.")
+    fp = json.loads((build_index(cfg).path / "manifest.json").read_text())["corpus_fingerprint"]
+    assert len(fp["digest"]) == 16 and fp["sources"] == ["docs@abc1234"]
+
+
+def test_changed_corpus_rebuilds_the_cached_index(cfg):
+    build_index(cfg)
+    (Path(cfg.corpus.path) / "b.md").write_text("# Beta\n\nBeta now covers dependency injection.")
+    assert any("dependency injection" in c.text for c in build_index(cfg).chunks)

@@ -220,7 +220,7 @@ ragkit evalset check -c configs/toy.yaml -e evals/datasets/toy.jsonl
 | AURC | Area under the risk–coverage curve, ordered by confidence |
 
 Each run writes `runs/<time>_<config>_<split>/` with `config.yaml`, `predictions.jsonl`,
-`metrics.json` (including git commit, prompt version and model) and, when the score gate is off,
+`metrics.json` (including git commit, corpus digest and source, prompt version and model) and, when the score gate is off,
 `curve.json`. `ragkit tune` reads only the `calib` split, replays the score gate at every threshold
 and writes `configs/tuned/<config>.yaml`. `make report` builds the ablation table from the newest
 run per config. The `lexical` judge is an offline proxy only; LLM judge numbers get reported only

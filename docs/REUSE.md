@@ -105,6 +105,9 @@ and returns an object whose `generate_structured(system, user, schema)` returns
   records it.
 - `ragkit tune` reads only the `calib` split. Never tune anything on `test`.
 - The index is cached by a hash of corpus, chunker and embedder. Variants that change only the
-  retriever, reranker or generator reuse it.
+  retriever, reranker or generator reuse it. Editing corpus files triggers a rebuild on the next
+  `ragkit ingest`.
+- Put a `source` field (for example `mydocs@<commit>`) in each file's front matter. Index manifests
+  and run metadata record it, so every number traces back to a corpus version.
 - Keep working notes (PRD, ADRs, experiment log) in the gitignored `artifacts/` folder and summarize
   decisions worth publishing in `docs/architecture.md`.

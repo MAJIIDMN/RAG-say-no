@@ -66,6 +66,7 @@ def test_eval_run_writes_config_predictions_metrics_and_curve(cfg, tmp_path):
     ):
         assert key in m, key
     assert m["meta"]["split"] == "dev" and m["meta"]["judge"] == "lexical"
+    assert len(m["meta"]["corpus"]["digest"]) == 16
 
 
 def test_runner_survives_a_failing_item(cfg, tmp_path):

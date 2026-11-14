@@ -26,6 +26,7 @@ from ragkit.core.stages import Judge, Verifier
 from ragkit.eval import metrics as M
 from ragkit.eval.dataset import EvalItem, describe
 from ragkit.generation.prompts import PROMPT_VERSION
+from ragkit.index.store import read_manifest
 from ragkit.pipeline import LazyLLM, RAGPipeline
 
 
@@ -218,6 +219,7 @@ def run_eval(
         "llm_model": gen_prices.model or None,
         "prompt_version": PROMPT_VERSION,
         "index_key": cfg.index_key(),
+        "corpus": read_manifest(cfg).get("corpus_fingerprint"),
         "git_commit": _git_commit(),
         "wall_seconds": round(time.perf_counter() - t0, 1),
     }

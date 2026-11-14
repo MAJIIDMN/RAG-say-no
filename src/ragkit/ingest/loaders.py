@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 from collections.abc import Callable
 from html.parser import HTMLParser
 from pathlib import Path
@@ -104,3 +105,12 @@ def load_documents(cfg: CorpusConfig) -> list[Document]:
     if not docs:
         raise ValueError(f"No documents with extensions {cfg.extensions} under {root}")
     return docs
+
+
+def corpus_fingerprint(docs: list[Document]) -> dict[str, Any]:
+    """Content digest plus the front-matter `source` values (e.g. `fastapi@315f093`)."""
+    h = hashlib.sha256()
+    for d in docs:
+        h.update(f"{d.doc_id}\0{d.text}\0".encode())
+    sources = sorted({str(d.metadata["source"]) for d in docs if d.metadata.get("source")})
+    return {"digest": h.hexdigest()[:16], "sources": sources}

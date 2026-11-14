@@ -45,7 +45,8 @@ measurable on its own, which an ablation study needs. The cost is writing advanc
 exact and fast enough; the
 [FAISS guidelines](https://github.com/facebookresearch/faiss/wiki/Guidelines-to-choose-an-index)
 note that the flat index is the only exact one. The index is cached by a hash of corpus, chunker and
-embedder, so variants that only change later stages share it. Move to FAISS or Qdrant past about
+embedder, so variants that only change later stages share it. The manifest also stores a digest of
+the corpus text, and `ragkit ingest` rebuilds the index when that digest changes. Move to FAISS or Qdrant past about
 100k chunks or when metadata filters are needed.
 
 **Heading-aware chunking (~400 tokens, no overlap) with a breadcrumb prefix.** It follows the
