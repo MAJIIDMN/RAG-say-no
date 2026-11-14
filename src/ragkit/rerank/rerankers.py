@@ -4,9 +4,9 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict
 
-from ragkit.core.registry import RERANKERS
+from ragkit.core.registry import RERANKERS, NoParams
 from ragkit.core.schemas import ScoredChunk
-from ragkit.ingest.chunkers import _TOKEN
+from ragkit.core.text import words
 
 
 def _rescored(candidates: list[ScoredChunk], scores: list[float], top_n: int) -> list[ScoredChunk]:
@@ -15,10 +15,6 @@ def _rescored(candidates: list[ScoredChunk], scores: list[float], top_n: int) ->
         for c, s in zip(candidates, scores, strict=True)
     ]
     return sorted(out, key=lambda c: c.score, reverse=True)[:top_n]
-
-
-class _NoParams(BaseModel):
-    model_config = ConfigDict(extra="forbid")
 
 
 class NoReranker:
@@ -30,10 +26,9 @@ class LexicalReranker:
     """Fraction of query tokens present in the passage. Offline stand-in for tests and CI."""
 
     def rerank(self, query: str, candidates: list[ScoredChunk], top_n: int) -> list[ScoredChunk]:
-        q = {t for t in _TOKEN.findall(query.lower()) if t.isalnum()}
+        q = set(words(query))
         scores = [
-            len(q & set(_TOKEN.findall(c.chunk.indexed_text.lower()))) / len(q) if q else 0.0
-            for c in candidates
+            len(q & set(words(c.chunk.indexed_text))) / len(q) if q else 0.0 for c in candidates
         ]
         return _rescored(candidates, scores, top_n)
 
@@ -69,13 +64,13 @@ class CrossEncoderReranker:
         return _rescored(candidates, [float(s) for s in scores], top_n)
 
 
-@RERANKERS.register("none", _NoParams)
-def _none(params: _NoParams) -> NoReranker:
+@RERANKERS.register("none")
+def _none(params: NoParams) -> NoReranker:
     return NoReranker()
 
 
-@RERANKERS.register("lexical", _NoParams)
-def _lexical(params: _NoParams) -> LexicalReranker:
+@RERANKERS.register("lexical")
+def _lexical(params: NoParams) -> LexicalReranker:
     return LexicalReranker()
 
 

@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import re
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, Field
 
-from ragkit.core.registry import VERIFIERS
-from ragkit.core.schemas import Chunk, Citation, Claim, ScoredChunk, Verification
+from ragkit.core.registry import VERIFIERS, NoParams
+from ragkit.core.schemas import Chunk, Citation, Claim, ScoredChunk, Verification, add_usage
 from ragkit.core.stages import LLMClient
 from ragkit.generation import prompts
 
@@ -50,10 +50,6 @@ def resolve_citations(claims: list[Claim], context: list[ScoredChunk]) -> list[C
                 )
             )
     return out
-
-
-class _NoParams(BaseModel):
-    model_config = ConfigDict(extra="forbid")
 
 
 class Entailment(BaseModel):
@@ -101,24 +97,23 @@ class LLMVerifier:
                 )
             except Exception as e:
                 return Verification(verdicts=[], usage=total, error=f"{type(e).__name__}: {e}")
-            for k, v in usage.items():
-                total[k] = total.get(k, 0) + v
+            add_usage(total, usage)
             out.append(verdict.supported)
         return Verification(verdicts=out, usage=total)
 
 
-@VERIFIERS.register("none", _NoParams)
-def _none(params: _NoParams, **_) -> NoVerifier:
+@VERIFIERS.register("none")
+def _none(params: NoParams, **_) -> NoVerifier:
     return NoVerifier()
 
 
-@VERIFIERS.register("quote", _NoParams)
-def _quote(params: _NoParams, **_) -> QuoteVerifier:
+@VERIFIERS.register("quote")
+def _quote(params: NoParams, **_) -> QuoteVerifier:
     return QuoteVerifier()
 
 
-@VERIFIERS.register("llm", _NoParams)
-def _llm(params: _NoParams, llm: LLMClient | None = None, **_) -> LLMVerifier:
+@VERIFIERS.register("llm")
+def _llm(params: NoParams, llm: LLMClient | None = None, **_) -> LLMVerifier:
     if llm is None:
         from ragkit.llm.base import client_for
 

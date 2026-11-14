@@ -7,8 +7,8 @@ from pydantic import BaseModel, ConfigDict, Field
 from ragkit.core.registry import GENERATORS
 from ragkit.core.schemas import Claim, ClaimCitation, GeneratedAnswer, Generation, ScoredChunk
 from ragkit.core.stages import LLMClient
+from ragkit.core.text import words
 from ragkit.generation import prompts
-from ragkit.ingest.chunkers import _TOKEN
 
 _SENTENCE = re.compile(r"(?<=[.!?])\s+")
 
@@ -38,11 +38,11 @@ class ExtractiveGenerator:
         self.p = params
 
     def generate(self, query: str, context: list[ScoredChunk]) -> Generation:
-        q = {t for t in _TOKEN.findall(query.lower()) if t.isalnum()}
+        q = set(words(query))
         best: tuple[float, int, str] = (0.0, 0, "")
         for i, sc in enumerate(context, start=1):
             for sentence in _prose_sentences(sc.chunk.text):
-                overlap = len(q & set(_TOKEN.findall(sentence.lower()))) / (len(q) or 1)
+                overlap = len(q & set(words(sentence))) / (len(q) or 1)
                 if overlap > best[0]:
                     best = (overlap, i, sentence)
         overlap, label, sentence = best

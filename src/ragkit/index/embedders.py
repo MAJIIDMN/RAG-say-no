@@ -8,7 +8,7 @@ import numpy as np
 from pydantic import BaseModel, ConfigDict
 
 from ragkit.core.registry import EMBEDDERS
-from ragkit.ingest.chunkers import _TOKEN
+from ragkit.core.text import TOKEN
 
 
 class HashingParams(BaseModel):
@@ -24,7 +24,7 @@ class HashingEmbedder:
 
     def _vec(self, text: str) -> np.ndarray:
         v = np.zeros(self.dim, dtype=np.float32)
-        for tok in _TOKEN.findall(text.lower()):
+        for tok in TOKEN.findall(text.lower()):
             h = int(hashlib.md5(tok.encode()).hexdigest(), 16)
             v[h % self.dim] += 1.0 if (h >> 64) & 1 else -1.0
         n = np.linalg.norm(v)

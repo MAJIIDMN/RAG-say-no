@@ -21,7 +21,7 @@ import yaml
 
 from ragkit.config import LLMSettings, RAGConfig, llm_settings
 from ragkit.core.registry import JUDGES, VERIFIERS
-from ragkit.core.schemas import Chunk
+from ragkit.core.schemas import Chunk, add_usage
 from ragkit.core.stages import Judge, Verifier
 from ragkit.eval import metrics as M
 from ragkit.eval.dataset import EvalItem, describe
@@ -95,8 +95,7 @@ def evaluate_item(
         if resp.answered and faithfulness is not None:
             check = faithfulness.verify(resp.claims, resp.retrieved)
             rec["faithful"] = check.verdicts
-            for k, v in check.usage.items():
-                judge_usage[k] = judge_usage.get(k, 0) + v
+            add_usage(judge_usage, check.usage)
     except Exception as e:  # noqa: BLE001 - keep the answer; drop the item from judged metrics
         rec["judge_error"] = f"{type(e).__name__}: {e}"
     rec["judge_usage"] = judge_usage

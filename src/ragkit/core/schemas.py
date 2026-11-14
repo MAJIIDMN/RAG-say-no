@@ -80,7 +80,10 @@ class Judgement(BaseModel):
     usage: dict[str, int] = Field(default_factory=dict)
 
 
-# Public response.
+def add_usage(total: dict[str, int], usage: dict[str, int]) -> None:
+    """Sum token counts from `usage` into `total` in place."""
+    for k, v in usage.items():
+        total[k] = total.get(k, 0) + v
 
 
 class Citation(BaseModel):

@@ -5,10 +5,10 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any, TypeVar, get_args, get_origin
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 
 from ragkit.config import LLMSettings
-from ragkit.core.registry import LLM_CLIENTS
+from ragkit.core.registry import LLM_CLIENTS, NoParams
 
 T = TypeVar("T", bound=BaseModel)
 Responder = Callable[[str, str, type[BaseModel]], BaseModel]
@@ -36,10 +36,6 @@ def agreeable(system: str, user: str, schema: type[BaseModel]) -> BaseModel:
     )
 
 
-class _NoParams(BaseModel):
-    model_config = ConfigDict(extra="forbid")
-
-
 class FakeLLMClient:
     def __init__(self, responder: Responder | None = None):
         self.model = "fake"
@@ -53,6 +49,6 @@ class FakeLLMClient:
         return self.responder(system, user, schema), {"input_tokens": 0, "output_tokens": 0}  # type: ignore[return-value]
 
 
-@LLM_CLIENTS.register("fake", _NoParams)
-def _fake(params: _NoParams, settings: LLMSettings | None = None) -> FakeLLMClient:
+@LLM_CLIENTS.register("fake")
+def _fake(params: NoParams, settings: LLMSettings | None = None) -> FakeLLMClient:
     return FakeLLMClient()

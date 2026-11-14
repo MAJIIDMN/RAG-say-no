@@ -9,8 +9,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from ragkit.core.registry import CHUNKERS
 from ragkit.core.schemas import Chunk, Document
+from ragkit.core.text import TOKEN
 
-_TOKEN = re.compile(r"\w+|[^\w\s]")
 _HEADING = re.compile(r"^(#{1,6})\s+(.+?)\s*$")
 _ANCHOR = re.compile(r"\s*\{\s*#[\w.-]+\s*\}\s*$")
 _FENCE = re.compile(r"^\s*(```|~~~)")
@@ -18,7 +18,7 @@ _SENTENCE_END = re.compile(r"(?<=[.!?])\s+")
 
 
 def count_tokens(text: str) -> int:
-    return len(_TOKEN.findall(text))
+    return len(TOKEN.findall(text))
 
 
 def _make_chunks(doc: Document, spans: list[tuple[int, int, str]]) -> list[Chunk]:
@@ -39,9 +39,6 @@ def _make_chunks(doc: Document, spans: list[tuple[int, int, str]]) -> list[Chunk
                 )
             )
     return chunks
-
-
-# Markdown heading chunker.
 
 
 class HeadingParams(BaseModel):
@@ -165,7 +162,7 @@ class MarkdownHeadingChunker:
                 out.append(piece)
                 continue
             # A single sentence or line still over budget: cut on token boundaries.
-            spans = [m.span() for m in _TOKEN.finditer(text, piece.start, piece.end)]
+            spans = [m.span() for m in TOKEN.finditer(text, piece.start, piece.end)]
             for i in range(0, len(spans), self.p.max_tokens):
                 group = spans[i : i + self.p.max_tokens]
                 out.append(self._block(text, group[0][0], group[-1][1], piece.is_code))
@@ -194,9 +191,6 @@ def _markdown_heading(params: HeadingParams) -> MarkdownHeadingChunker:
     return MarkdownHeadingChunker(params)
 
 
-# Fixed token window.
-
-
 class FixedParams(BaseModel):
     model_config = ConfigDict(extra="forbid")
     max_tokens: int = 400
@@ -210,7 +204,7 @@ class FixedChunker:
         self.p = params
 
     def chunk(self, doc: Document) -> list[Chunk]:
-        spans = [m.span() for m in _TOKEN.finditer(doc.text)]
+        spans = [m.span() for m in TOKEN.finditer(doc.text)]
         step = self.p.max_tokens - self.p.overlap_tokens
         out = []
         for i in range(0, len(spans), step):

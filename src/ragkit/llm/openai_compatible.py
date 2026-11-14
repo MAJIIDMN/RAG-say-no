@@ -4,18 +4,14 @@ from __future__ import annotations
 
 from typing import Any, TypeVar
 
-from pydantic import BaseModel, ConfigDict, ValidationError
+from pydantic import BaseModel, ValidationError
 
 from ragkit.config import LLMSettings
-from ragkit.core.registry import LLM_CLIENTS
+from ragkit.core.registry import LLM_CLIENTS, NoParams
 from ragkit.llm.base import StructuredOutputError
 from ragkit.llm.structured import extract_json, schema_instructions, strict_json_schema
 
 T = TypeVar("T", bound=BaseModel)
-
-
-class _NoParams(BaseModel):
-    model_config = ConfigDict(extra="forbid")
 
 
 class OpenAICompatibleClient:
@@ -79,6 +75,6 @@ class OpenAICompatibleClient:
         raise StructuredOutputError("; ".join(errors) or "no structured_modes configured")
 
 
-@LLM_CLIENTS.register("openai_compatible", _NoParams)
-def _openai_compatible(params: _NoParams, settings: LLMSettings) -> OpenAICompatibleClient:
+@LLM_CLIENTS.register("openai_compatible")
+def _openai_compatible(params: NoParams, settings: LLMSettings) -> OpenAICompatibleClient:
     return OpenAICompatibleClient(settings)

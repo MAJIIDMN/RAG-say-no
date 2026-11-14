@@ -21,7 +21,9 @@ class StageSpec(BaseModel):
         return dict(self.model_extra or {})
 
 
-class _NoParams(BaseModel):
+class NoParams(BaseModel):
+    """Params model for implementations that take no options."""
+
     model_config = ConfigDict(extra="forbid")
 
 
@@ -40,7 +42,7 @@ class Registry(Generic[T]):
             raise ValueError(f"{self.kind} '{name}' is already registered")
 
         def deco(factory: Callable[..., T]) -> Callable[..., T]:
-            self._entries[name] = (factory, params or _NoParams)
+            self._entries[name] = (factory, params or NoParams)
             return factory
 
         return deco

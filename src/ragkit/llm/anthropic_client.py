@@ -4,17 +4,13 @@ from __future__ import annotations
 
 from typing import TypeVar
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel
 
 from ragkit.config import LLMSettings
-from ragkit.core.registry import LLM_CLIENTS
+from ragkit.core.registry import LLM_CLIENTS, NoParams
 from ragkit.llm.base import StructuredOutputError
 
 T = TypeVar("T", bound=BaseModel)
-
-
-class _NoParams(BaseModel):
-    model_config = ConfigDict(extra="forbid")
 
 
 class AnthropicClient:
@@ -51,6 +47,6 @@ class AnthropicClient:
         }
 
 
-@LLM_CLIENTS.register("anthropic", _NoParams)
-def _anthropic(params: _NoParams, settings: LLMSettings) -> AnthropicClient:
+@LLM_CLIENTS.register("anthropic")
+def _anthropic(params: NoParams, settings: LLMSettings) -> AnthropicClient:
     return AnthropicClient(settings)

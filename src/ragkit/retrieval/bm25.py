@@ -4,8 +4,8 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from ragkit.core.registry import RETRIEVERS
 from ragkit.core.schemas import ScoredChunk
+from ragkit.core.text import words
 from ragkit.index.store import Index
-from ragkit.ingest.chunkers import _TOKEN
 
 
 class BM25Params(BaseModel):
@@ -27,7 +27,7 @@ class BM25Retriever:
         self.bm25.index(corpus, show_progress=False)
 
     def _tokens(self, text: str) -> list[str]:
-        return [t for t in _TOKEN.findall(text.lower()) if t.isalnum() and t not in self.stopwords]
+        return [t for t in words(text) if t not in self.stopwords]
 
     def search(self, query: str, k: int) -> list[ScoredChunk]:
         tokens = self._tokens(query)

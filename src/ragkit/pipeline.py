@@ -9,7 +9,7 @@ from typing import Any
 from ragkit.abstention.policy import AbstentionPolicy, Decision
 from ragkit.config import RAGConfig
 from ragkit.core.registry import GENERATORS, RERANKERS, RETRIEVERS, VERIFIERS
-from ragkit.core.schemas import RAGResponse
+from ragkit.core.schemas import RAGResponse, add_usage
 from ragkit.core.stages import Embedder, LLMClient
 from ragkit.index.store import Index, get_embedder, load_index
 from ragkit.verification.verifiers import resolve_citations
@@ -34,11 +34,6 @@ class LazyLLM:
 
     def generate_structured(self, system, user, schema):
         return self._get().generate_structured(system, user, schema)
-
-
-def _add(total: dict[str, int], usage: dict[str, int]) -> None:
-    for k, v in usage.items():
-        total[k] = total.get(k, 0) + v
 
 
 class RAGPipeline:
@@ -86,7 +81,7 @@ class RAGPipeline:
         def finish(decision: Decision | None = None, **kw) -> RAGResponse:
             timings["total"] = round((time.perf_counter() - t_total) * 1000, 1)
             if decision is not None:
-                _add(usage, decision.usage)
+                add_usage(usage, decision.usage)
                 detail = f" ({decision.detail})" if decision.detail else ""
                 kw = {
                     "answered": False,
@@ -107,11 +102,11 @@ class RAGPipeline:
             decision = self.policy.before_generation(query, context)
         if decision.abstain:
             return finish(decision)
-        _add(usage, decision.usage)
+        add_usage(usage, decision.usage)
 
         with timed("generate"):
             generation = self.generator.generate(query, context)
-        _add(usage, generation.usage)
+        add_usage(usage, generation.usage)
         diag["status"] = generation.answer.status if generation.answer else None
         diag["generation_error"] = generation.error
         decision = self.policy.after_generation(generation)
@@ -121,7 +116,7 @@ class RAGPipeline:
         claims = generation.answer.claims
         with timed("verify"):
             verification = self.verifier.verify(claims, context)
-        _add(usage, verification.usage)
+        add_usage(usage, verification.usage)
         if verification.error:
             return finish(Decision("verification_failed", verification.error))
         kept = [c for c, ok in zip(claims, verification.verdicts, strict=True) if ok]
