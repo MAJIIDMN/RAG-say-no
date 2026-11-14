@@ -282,6 +282,11 @@ checks, a thin structured-output client over LiteLLM/instructor, and own metrics
   `calib` refuses half of the answerable `test` questions. The score gate is meant for cross-encoder
   scores, which are not measured yet.
 - The `lexical` judge is a proxy; the LLM judge has not been audited against hand labels.
+- Nothing warns when the judge falls back to the generator model, so the LLM judges its own
+  answers unless `JUDGE_MODEL` is set.
+- Only `ragkit ingest` checks the corpus digest. `ask`, `eval` and `serve` use the cached index
+  as is; each run records the digest the index was built from.
+- A refusal says what is missing, but does not suggest a related page.
 - Brute-force numpy index with a single vector store adapter.
 - English documentation and single-turn Q&A only.
 
