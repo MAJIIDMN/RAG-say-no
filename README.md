@@ -325,3 +325,4 @@ cross-encoder/ms-marco-MiniLM-L6-v2 (Apache-2.0), downloaded on first use.
 ## Contact
 
 GitHub: [MAJIIDMN](https://github.com/MAJIIDMN)
+Email: [Majiid](mailto:muhammadnurmajiid22@gmail.com)
